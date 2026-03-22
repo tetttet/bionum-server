@@ -1,0 +1,17 @@
+.env
+node_mobules
+dist
+build
+coverage
+.DS_Store
+*.log
+*.lock
+.idea
+.vscode
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.bak
+*.tmp
+*.zip
+*.tar.gz

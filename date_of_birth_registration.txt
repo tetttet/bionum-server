@@ -1,0 +1,36 @@
+Как сохраняется дата рождения при регистрации пользователя
+
+1. Клиент отправляет дату рождения в JSON body в поле date_of_birth.
+   Рекомендуемый формат: YYYY-MM-DD, например "2000-05-21".
+
+2. Регистрация доступна через два маршрута:
+   - POST /api/auth/register
+   - POST /api/users
+
+3. В обоих контроллерах поле date_of_birth достается напрямую из req.body:
+   - controllers/auth.controller.js: register()
+   - controllers/user.controller.js: registerUser()
+
+4. date_of_birth не входит в список обязательных полей.
+   Обязательные поля сейчас: first_name, last_name, email, password.
+   Если date_of_birth не отправить, в базу уйдет пустое значение NULL.
+
+5. Перед сохранением отдельной валидации или преобразования даты в коде нет.
+   Значение date_of_birth передается в createUser() как есть.
+
+6. В models/user.model.js функция createUser() делает INSERT:
+   INSERT INTO users (first_name, middle_name, last_name, date_of_birth, email, password)
+   VALUES ($1, $2, $3, $4, $5, $6)
+
+   Здесь date_of_birth записывается четвертым параметром, то есть в колонку users.date_of_birth.
+
+7. Таблица users создается с колонкой:
+   date_of_birth DATE
+
+   Это тип PostgreSQL DATE: сохраняется только календарная дата без времени.
+
+8. Если отправить некорректную строку даты, PostgreSQL может вернуть ошибку при INSERT.
+   Поэтому на клиенте лучше всегда отправлять date_of_birth в формате YYYY-MM-DD.
+
+Коротко:
+date_of_birth приходит из body запроса регистрации, без дополнительной обработки передается в модель createUser(), а затем сохраняется в PostgreSQL в колонку users.date_of_birth типа DATE.

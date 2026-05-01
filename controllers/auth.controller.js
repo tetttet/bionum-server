@@ -16,6 +16,7 @@ const {
   markResetCodeUsed,
   incrementResetAttempts,
 } = require("../models/password_reset.model");
+const { normalizeDateOnly } = require("../utils/dateOnly");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
@@ -125,12 +126,13 @@ exports.register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const normalizedDateOfBirth = normalizeDateOnly(date_of_birth);
 
     const user = await createUser({
       first_name,
       middle_name,
       last_name,
-      date_of_birth,
+      date_of_birth: normalizedDateOfBirth,
       email: normalizedEmail,
       password: hashedPassword,
     });
@@ -141,6 +143,10 @@ exports.register = async (req, res) => {
 
     res.status(201).json({ message: "User registered", token, user });
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
     console.error("Error registering user:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -198,9 +204,12 @@ exports.update = async (req, res) => {
       first_name,
       middle_name,
       last_name,
-      date_of_birth,
       email: email ? normalizeEmail(email) : undefined,
     };
+
+    if (Object.prototype.hasOwnProperty.call(req.body, "date_of_birth")) {
+      updatedData.date_of_birth = normalizeDateOnly(date_of_birth);
+    }
 
     if (password) {
       updatedData.password = await bcrypt.hash(password, 10);
@@ -210,6 +219,10 @@ exports.update = async (req, res) => {
 
     res.json({ message: "User updated", user: updatedUser });
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
     console.error("Error updating user:", error);
     res.status(500).json({ error: "Internal server error" });
   }

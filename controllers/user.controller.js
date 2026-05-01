@@ -8,6 +8,7 @@ const {
   updateUser,
   deleteUser,
 } = require("../models/user.model");
+const { normalizeDateOnly } = require("../utils/dateOnly");
 
 // --- Создать нового пользователя
 exports.registerUser = async (req, res) => {
@@ -31,18 +32,23 @@ exports.registerUser = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const normalizedDateOfBirth = normalizeDateOnly(date_of_birth);
 
     const newUser = await createUser({
       first_name,
       middle_name,
       last_name,
-      date_of_birth,
+      date_of_birth: normalizedDateOfBirth,
       email,
       password: hashedPassword,
     });
 
     res.status(201).json(newUser);
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
     console.error("Error creating user:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -78,7 +84,11 @@ exports.getUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const fields = req.body;
+    const fields = { ...req.body };
+
+    if (Object.prototype.hasOwnProperty.call(fields, "date_of_birth")) {
+      fields.date_of_birth = normalizeDateOnly(fields.date_of_birth);
+    }
 
     // Если обновляют пароль — хэшируем
     if (fields.password) {
@@ -91,6 +101,10 @@ exports.updateUser = async (req, res) => {
 
     res.json(updatedUser);
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
     console.error("Error updating user:", error);
     res.status(500).json({ error: "Internal server error" });
   }

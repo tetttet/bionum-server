@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const db = require("../config/db"); // это pool из pg
+const { getUserById } = require("../models/user.model");
 const JWT_SECRET = process.env.JWT_SECRET;
 
 exports.authMiddleware = async (req, res, next) => {
@@ -16,11 +16,7 @@ exports.authMiddleware = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // ✅ Запрос к базе напрямую через pool.query
-    const result = await db.query("SELECT * FROM users WHERE id = $1 LIMIT 1", [
-      decoded.id,
-    ]);
-    const user = result.rows[0];
+    const user = await getUserById(decoded.id);
 
     if (!user) {
       console.log("User not found for id:", decoded.id);

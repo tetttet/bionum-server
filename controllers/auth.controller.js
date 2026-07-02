@@ -7,6 +7,7 @@ const {
   createUser,
   updateUser,
   updateUserPasswordByEmail,
+  deleteUser,
 } = require("../models/user.model");
 
 const {
@@ -15,7 +16,10 @@ const {
   getActiveResetCode,
   markResetCodeUsed,
   incrementResetAttempts,
+  deleteResetCodesByEmail,
 } = require("../models/password_reset.model");
+const SubscriptionsModel = require("../models/subscriptions.model");
+const WebhookEventsModel = require("../models/webhook_events.model");
 const { normalizeDateOnly } = require("../utils/dateOnly");
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -35,6 +39,19 @@ function normalizeEmail(email) {
 
 function generateSixDigitCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+async function runOptionalAccountCleanup(label, cleanup) {
+  try {
+    await cleanup();
+  } catch (error) {
+    if (error?.code === "42P01") {
+      console.warn(`Skipping account cleanup for missing table: ${label}`);
+      return;
+    }
+
+    throw error;
+  }
 }
 
 function getResetCopy(locale, code) {
@@ -224,6 +241,30 @@ exports.update = async (req, res) => {
     }
 
     console.error("Error updating user:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// --- Удаление текущего аккаунта
+exports.deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const email = normalizeEmail(req.user.email);
+
+    await runOptionalAccountCleanup("password_reset_codes", () =>
+      deleteResetCodesByEmail(email),
+    );
+    await runOptionalAccountCleanup("subscriptions", () =>
+      SubscriptionsModel.deleteByUserId(userId),
+    );
+    await runOptionalAccountCleanup("webhook_events", () =>
+      WebhookEventsModel.deleteByAppUserId(userId),
+    );
+    await deleteUser(userId);
+
+    res.json({ success: true, message: "Account deleted" });
+  } catch (error) {
+    console.error("Error deleting account:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

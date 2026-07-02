@@ -5,6 +5,7 @@ const {
   register,
   login,
   update,
+  deleteAccount,
   verifyToken,
   sendResetCode,
   verifyResetCode,
@@ -17,6 +18,7 @@ const { authMiddleware } = require("../middleware/auth.middleware");
 router.post("/register", register);
 router.post("/login", login);
 router.patch("/update", authMiddleware, update);
+router.delete("/delete", authMiddleware, deleteAccount);
 
 // --- Проверка токена
 router.get("/verify", authMiddleware, verifyToken);

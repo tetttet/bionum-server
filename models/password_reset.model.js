@@ -91,6 +91,16 @@ async function incrementResetAttempts(id) {
   return result.rows[0];
 }
 
+async function deleteResetCodesByEmail(email) {
+  await pool.query(
+    `
+    DELETE FROM password_reset_codes
+    WHERE email = $1
+    `,
+    [email]
+  );
+}
+
 module.exports = {
   initPasswordResetTable,
   invalidatePreviousCodes,
@@ -98,4 +108,5 @@ module.exports = {
   getActiveResetCode,
   markResetCodeUsed,
   incrementResetAttempts,
+  deleteResetCodesByEmail,
 };

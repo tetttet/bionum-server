@@ -150,6 +150,16 @@ const SubscriptionsModel = {
     const result = await pool.query(query, [id]);
     return result.rows[0];
   },
+
+  async deleteByUserId(userId) {
+    const query = `
+      DELETE FROM subscriptions
+      WHERE user_id = $1
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [userId]);
+    return result.rows;
+  },
 };
 
 module.exports = SubscriptionsModel;

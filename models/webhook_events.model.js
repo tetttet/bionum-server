@@ -82,6 +82,16 @@ const WebhookEventsModel = {
     const result = await pool.query(query, [id]);
     return result.rows[0];
   },
+
+  async deleteByAppUserId(appUserId) {
+    const query = `
+      DELETE FROM webhook_events
+      WHERE app_user_id = $1
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [String(appUserId)]);
+    return result.rows;
+  },
 };
 
 module.exports = WebhookEventsModel;

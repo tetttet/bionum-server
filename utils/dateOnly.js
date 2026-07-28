@@ -50,6 +50,16 @@ function normalizeDateOnly(value) {
   return value;
 }
 
+function isValidDateOnly(value) {
+  if (typeof value !== "string") return false;
+
+  try {
+    return normalizeDateOnly(value) === value;
+  } catch {
+    return false;
+  }
+}
+
 function isLeapYear(year) {
   return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 }
@@ -60,4 +70,4 @@ function throwBadDate() {
   throw error;
 }
 
-module.exports = { normalizeDateOnly };
+module.exports = { isValidDateOnly, normalizeDateOnly };

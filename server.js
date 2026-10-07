@@ -14,6 +14,7 @@ const userRoutes = require("./routes/user.routes");
 const authRoutes = require("./routes/auth.routes");
 const subscriptionsRoutes = require("./routes/subscriptions.routes");
 const webhookEventsRoutes = require("./routes/webhook_events.routes");
+const chatRoutes = require("./routes/chat.routes");
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
@@ -22,6 +23,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/subscriptions", subscriptionsRoutes);
 app.use("/api/webhook-events", webhookEventsRoutes);
+app.use("/api/chat", chatRoutes);
 
 async function startServer() {
   try {

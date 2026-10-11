@@ -43,7 +43,8 @@ exports.registerUser = async (req, res) => {
       password: hashedPassword,
     });
 
-    res.status(201).json(newUser);
+    const { password: _password, ...profile } = newUser;
+    res.status(201).json(profile);
   } catch (error) {
     if (error.statusCode) {
       return res.status(error.statusCode).json({ error: error.message });
@@ -58,7 +59,7 @@ exports.registerUser = async (req, res) => {
 exports.getUsers = async (req, res) => {
   try {
     const users = await getAllUsers();
-    res.json(users);
+    res.json(users.map(({ password, date_of_birth, ...profile }) => profile));
   } catch (error) {
     console.error("Error getting users:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -73,7 +74,8 @@ exports.getUser = async (req, res) => {
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    res.json(user);
+    const { password, ...profile } = user;
+    res.json(profile);
   } catch (error) {
     console.error("Error getting user:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -99,7 +101,8 @@ exports.updateUser = async (req, res) => {
 
     if (!updatedUser) return res.status(404).json({ error: "User not found" });
 
-    res.json(updatedUser);
+    const { password, ...profile } = updatedUser;
+    res.json(profile);
   } catch (error) {
     if (error.statusCode) {
       return res.status(error.statusCode).json({ error: error.message });

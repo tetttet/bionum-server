@@ -19,6 +19,8 @@ const chatRoutes = require("./routes/chat.routes");
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
+app.use("/api/admin-access", require("./routes/admin-access.routes"));
+app.use("/api/admin", require("./routes/admin.routes"));
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/subscriptions", subscriptionsRoutes);
@@ -29,6 +31,7 @@ async function startServer() {
   try {
     await initUserTable();
     await initPasswordResetTable();
+    await require("./models/admin.model").initAdminTables(require("./config/db"));
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀🚀🚀 Сервер работает на http://localhost:${PORT}`);

@@ -83,7 +83,7 @@ async function getUserByEmail(email) {
   const normalizedEmail = email.trim().toLowerCase();
 
   const result = await pool.query(
-    `SELECT ${USER_COLUMNS} FROM users WHERE email = $1`,
+    `SELECT ${USER_COLUMNS} FROM users WHERE lower(trim(email)) = $1`,
     [normalizedEmail],
   );
   return result.rows[0];
@@ -91,12 +91,26 @@ async function getUserByEmail(email) {
 
 // --- Обновить данные пользователя
 async function updateUser(id, fields) {
+  if (fields.email !== undefined) {
+    const email = String(fields.email).trim().toLowerCase();
+    const { eligible } = require('../middleware/admin.middleware');
+    if (eligible({ email })) {
+      const current = await getUserById(id);
+      if (String(current?.email || '').trim().toLowerCase() !== email) {
+        const error = new Error('This email cannot be assigned to another account');
+        error.statusCode = 403;
+        throw error;
+      }
+    }
+    fields.email = email;
+  }
+
   if (Object.prototype.hasOwnProperty.call(fields, "date_of_birth")) {
     fields.date_of_birth = normalizeDateOnly(fields.date_of_birth);
   }
 
   const filteredEntries = Object.entries(fields).filter(
-    ([, value]) => value !== undefined,
+    ([key, value]) => ["first_name", "middle_name", "last_name", "date_of_birth", "email", "password"].includes(key) && value !== undefined,
   );
 
   if (filteredEntries.length === 0) return null;
